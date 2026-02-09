@@ -1,0 +1,198 @@
+{% extends 'base.html' %}
+
+{% block title %}Voter Dashboard - QuickVote{% endblock %}
+
+{% block extra_head %}
+<style>
+    .dashboard-hero {
+        background: linear-gradient(135deg, var(--primary-color) 0%, #1a3c5e 100%);
+        color: white;
+        padding: 60px 0 100px;
+        border-radius: 0 0 50px 50px;
+        margin-top: -2rem;
+        margin-bottom: -60px;
+    }
+
+    .stat-card {
+        padding: 30px;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+
+    .stat-card i {
+        font-size: 2.5rem;
+        margin-bottom: 20px;
+        color: var(--secondary-color);
+    }
+
+    .profile-status-badge {
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        padding: 8px 15px;
+        border-radius: 50px;
+        display: inline-block;
+        margin-top: 10px;
+    }
+
+    .dashboard-action-btn {
+        border-radius: 15px;
+        padding: 15px;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 15px;
+        transition: all 0.3s;
+        text-decoration: none !important;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .dashboard-action-btn:hover {
+        transform: translateX(10px);
+        background: var(--bg-light);
+        border-color: var(--secondary-color);
+    }
+
+    .action-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        margin-right: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block full_width %}
+<div class="dashboard-hero animate-up">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="fw-bold mb-2">Welcome back, <span class="text-accent">{{ user.username }}</span>!</h1>
+                <p class="opacity-75 mb-0">Manage your voting activities and profile details from here.</p>
+            </div>
+            <div class="col-md-4 text-md-end mt-4 mt-md-0">
+                <div
+                    class="d-inline-flex align-items-center bg-white bg-opacity-10 p-2 px-4 rounded-pill border border-white border-opacity-25">
+                    <div class="bg-success rounded-circle me-3" style="width: 12px; height: 12px;"></div>
+                    <span class="small fw-bold">Active Voter Session</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row mt-5">
+    <div class="col-lg-12">
+        <div class="row">
+            <div class="col-md-4 mb-4 animate-up delay-1">
+                <div class="glass-card stat-card h-100">
+                    <i class="fas fa-id-card"></i>
+                    <h5 class="fw-bold" style="color: var(--primary-color);">Verification Status</h5>
+                    {% if user.student_profile %}
+                    <p class="text-muted small">Your biometric profile is active and verified.</p>
+                    <span class="profile-status-badge bg-success bg-opacity-10 text-success fw-bold">
+                        <i class="fas fa-check-circle me-1"></i> Profile Completed
+                    </span>
+                    {% else %}
+                    <p class="text-muted small">Complete your profile to enable AI voting.</p>
+                    <a href="{% url 'voter_profile' %}" class="btn btn-warning btn-sm px-4 rounded-pill fw-bold">Finish
+                        Setup</a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="col-md-4 mb-4 animate-up delay-2">
+                <div class="glass-card stat-card h-100">
+                    <i class="fas fa-vote-yea"></i>
+                    <h5 class="fw-bold" style="color: var(--primary-color);">Active Ballots</h5>
+                    <p class="text-muted small">There are currently active elections waiting for your vote.</p>
+                    <a href="{% url 'election_list' %}" class="btn btn-register btn-sm px-4 rounded-pill">View
+                        Elections</a>
+                </div>
+            </div>
+
+            <div class="col-md-4 mb-4 animate-up delay-3">
+                <div class="glass-card stat-card h-100">
+                    <i class="fas fa-history"></i>
+                    <h5 class="fw-bold" style="color: var(--primary-color);">Recent Results</h5>
+                    <p class="text-muted small">Check the outcome of past and current legislative sessions.</p>
+                    <a href="{% url 'election_list' %}" class="btn btn-outline-primary btn-sm px-4 rounded-pill">View
+                        Results</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 mt-4">
+        <h4 class="fw-bold mb-4 animate-up" style="color: var(--primary-color);">Quick Actions</h4>
+        <div class="row">
+            <div class="col-md-6 animate-up delay-1">
+                <a href="{% url 'election_list' %}" class="dashboard-action-btn glass-card">
+                    <div class="d-flex align-items-center">
+                        <div class="action-icon bg-primary bg-opacity-10 text-primary">
+                            <i class="fas fa-list"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-0 fw-bold">Election Directory</h6>
+                            <small class="text-muted">Browse all live and upcoming polls</small>
+                        </div>
+                    </div>
+                    <i class="fas fa-chevron-right text-muted opacity-50"></i>
+                </a>
+
+                <a href="{% url 'feedback' %}" class="dashboard-action-btn glass-card">
+                    <div class="d-flex align-items-center">
+                        <div class="action-icon bg-info bg-opacity-10 text-info">
+                            <i class="fas fa-headset"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-0 fw-bold">Technical Support</h6>
+                            <small class="text-muted">Contact help center or submit feedback</small>
+                        </div>
+                    </div>
+                    <i class="fas fa-chevron-right text-muted opacity-50"></i>
+                </a>
+            </div>
+
+            <div class="col-md-6 animate-up delay-2">
+                <a href="#" class="dashboard-action-btn glass-card">
+                    <div class="d-flex align-items-center">
+                        <div class="action-icon bg-secondary bg-opacity-10 text-secondary">
+                            <i class="fas fa-user-cog"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-0 fw-bold">Account Settings</h6>
+                            <small class="text-muted">Update your login and notification settings</small>
+                        </div>
+                    </div>
+                    <i class="fas fa-chevron-right text-muted opacity-50"></i>
+                </a>
+
+                <form action="{% url 'logout' %}" method="post" style="display: block;">
+                    {% csrf_token %}
+                    <button type="submit" class="dashboard-action-btn glass-card w-100 text-start"
+                        style="background: none;">
+                        <div class="d-flex align-items-center">
+                            <div class="action-icon bg-danger bg-opacity-10 text-danger">
+                                <i class="fas fa-power-off"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0 fw-bold text-danger">Logout Session</h6>
+                                <small class="text-muted">Securely exit your account</small>
+                            </div>
+                        </div>
+                        <i class="fas fa-chevron-right text-muted opacity-50"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,279 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{ election.title }} - QuickVote{% endblock %}
+
+{% block extra_head %}
+<style>
+    .election-header {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        color: white;
+        padding: 60px 40px;
+        border-radius: 30px;
+        margin-bottom: 40px;
+        box-shadow: 0 15px 35px rgba(13, 37, 63, 0.2);
+    }
+
+    .verification-box {
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 2px dashed var(--secondary-color);
+        border-radius: 25px;
+        padding: 40px;
+        transition: all 0.3s ease;
+    }
+
+    .candidate-label {
+        background: rgba(255, 255, 255, 0.6);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        border-radius: 20px;
+        padding: 20px;
+        margin-bottom: 15px;
+        cursor: pointer;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+    }
+
+    .candidate-label:hover {
+        background: rgba(255, 255, 255, 0.9);
+        transform: scale(1.02);
+        border-color: var(--secondary-color);
+    }
+
+    .form-check-input:checked+.candidate-content {
+        color: var(--secondary-color);
+    }
+
+    .candidate-label input[type="radio"]:checked~.candidate-content h5 {
+        color: var(--secondary-color);
+    }
+
+    .candidate-img {
+        width: 60px;
+        height: 60px;
+        object-fit: cover;
+        border-radius: 12px;
+        margin-right: 20px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    #video {
+        border: 5px solid white;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        background: #000;
+        width: 100%;
+        max-width: 400px;
+    }
+
+    .step-indicator {
+        width: 40px;
+        height: 40px;
+        background: var(--secondary-color);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        margin-bottom: 20px;
+    }
+
+    .btn-action {
+        padding: 12px 30px;
+        border-radius: 50px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        transition: all 0.3s;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mt-4">
+    <div class="col-12 animate-up">
+        <div class="election-header">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="fw-extrabold mb-3">{{ election.title }}</h1>
+                    <p class="lead opacity-75">{{ election.description }}</p>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <span class="badge bg-white text-primary px-4 py-2 rounded-pill fw-bold">
+                        <i class="far fa-clock me-2"></i>Ends: {{ election.end_date|date:"M d, H:i" }}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        {% if has_voted %}
+        <div class="glass-card p-5 text-center animate-up">
+            <div class="mb-4">
+                <i class="fas fa-check-circle fa-5x text-success"></i>
+            </div>
+            <h2 class="fw-bold mb-3">Vote Successfully Cast!</h2>
+            <p class="text-muted mb-5">Your voice has been heard. Thank you for participating in this election.</p>
+            <a href="{% url 'election_results' election.id %}" class="btn btn-register px-5 py-3">
+                <i class="fas fa-chart-pie me-2"></i>View Live Results
+            </a>
+        </div>
+        {% else %}
+
+        <!-- Step 1: Verification -->
+        <div id="verification-section" class="glass-card p-5 animate-up delay-1">
+            <div class="step-indicator">1</div>
+            <h3 class="fw-bold mb-3">Identity Verification</h3>
+            <p class="text-muted mb-5">Before casting your vote, we need to verify your identity using AI face
+                recognition. This ensures a fair and secure election.</p>
+
+            <div class="text-center mb-5">
+                <div class="d-inline-block position-relative">
+                    <video id="video" autoplay muted playsinline></video>
+                    <canvas id="canvas" style="display:none;"></canvas>
+                    <div id="scan-line"
+                        style="display:none; position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: var(--secondary-color); box-shadow: 0 0 15px var(--secondary-color); transition: top 0.1s;">
+                    </div>
+                </div>
+
+                <div id="status-message" class="mt-4 fw-bold h5"></div>
+            </div>
+
+            <div class="d-grid gap-3 d-md-flex justify-content-md-center">
+                <button id="start-camera" class="btn btn-action btn-secondary">
+                    <i class="fas fa-video me-2"></i>Open Camera
+                </button>
+                <button id="capture-btn" class="btn btn-action btn-register" style="display:none;">
+                    <i class="fas fa-user-check me-2"></i>Verify Identity
+                </button>
+            </div>
+        </div>
+
+        <!-- Step 2: Voting -->
+        <div id="voting-section" class="glass-card p-5 animate-up" style="display:none;">
+            <div class="step-indicator">2</div>
+            <h3 class="fw-bold mb-3">Choose Your Candidate</h3>
+            <p class="text-muted mb-5">Please select the candidate you wish to vote for. Remember, your vote is
+                permanent and encrypted.</p>
+
+            <form action="{% url 'cast_vote' election.id %}" method="post">
+                {% csrf_token %}
+                <div class="row">
+                    {% for candidate in candidates %}
+                    <div class="col-md-6 mb-3">
+                        <label class="candidate-label w-100">
+                            <input class="form-check-input me-3" type="radio" name="candidate"
+                                value="{{ candidate.id }}" required>
+                            {% if candidate.symbol %}
+                            <img src="{{ candidate.symbol.url }}" alt="{{ candidate.name }}" class="candidate-img">
+                            {% else %}
+                            <div class="candidate-img bg-light d-flex align-items-center justify-content-center">
+                                <i class="fas fa-user text-muted"></i>
+                            </div>
+                            {% endif %}
+                            <div class="candidate-content text-start">
+                                <h5 class="mb-0 fw-bold">{{ candidate.name }}</h5>
+                                <small class="text-muted">{{ candidate.details }}</small>
+                            </div>
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div class="mt-5 text-center">
+                    <button type="submit" class="btn btn-register btn-lg px-5 py-3"
+                        onclick="return confirm('Are you sure you want to cast your vote for this candidate?')">
+                        <i class="fas fa-paper-plane me-2"></i>Confirm & Submit Vote
+                    </button>
+                </div>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    {% if not has_voted %}
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const startBtn = document.getElementById('start-camera');
+    const captureBtn = document.getElementById('capture-btn');
+    const statusMsg = document.getElementById('status-message');
+    const verificationSection = document.getElementById('verification-section');
+    const votingSection = document.getElementById('voting-section');
+
+    startBtn.addEventListener('click', async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 400, height: 300 } });
+            video.srcObject = stream;
+            video.style.display = 'inline-block';
+            startBtn.style.display = 'none';
+            captureBtn.style.display = 'inline-block';
+            statusMsg.textContent = "Camera Ready";
+            statusMsg.className = "mt-4 fw-bold h5 text-primary";
+        } catch (err) {
+            statusMsg.className = 'mt-4 fw-bold h5 text-danger';
+            statusMsg.textContent = "Error: " + err.message;
+        }
+    });
+
+    captureBtn.addEventListener('click', () => {
+        const context = canvas.getContext('2d');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const dataURL = canvas.toDataURL('image/jpeg');
+
+        statusMsg.className = 'mt-4 fw-bold h5 text-secondary animate-pulse';
+        statusMsg.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Verifying Biometrics...';
+
+        fetch("{% url 'verify_face' election.id %}", {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: 'image=' + encodeURIComponent(dataURL)
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    statusMsg.className = 'mt-4 fw-bold h5 text-success';
+                    statusMsg.innerHTML = '<i class="fas fa-check-circle me-2"></i>Identity Confirmed';
+
+                    if (video.srcObject) {
+                        video.srcObject.getTracks().forEach(track => track.stop());
+                    }
+
+                    setTimeout(() => {
+                        verificationSection.style.opacity = '0';
+                        verificationSection.style.transform = 'translateY(-20px)';
+                        setTimeout(() => {
+                            verificationSection.style.display = 'none';
+                            votingSection.style.display = 'block';
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }, 500);
+                    }, 1000);
+                } else {
+                    statusMsg.className = 'mt-4 fw-bold h5 text-danger';
+                    statusMsg.innerHTML = '<i class="fas fa-times-circle me-2"></i>' + data.message;
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                statusMsg.className = 'mt-4 fw-bold h5 text-danger';
+                statusMsg.textContent = "Server connection error.";
+            });
+    });
+    {% endif %}
+</script>
+{% endblock %}

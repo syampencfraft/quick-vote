@@ -1,0 +1,294 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Welcome to QuickVote - Secure & Easy Digital Voting{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* Animations */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+
+        to {
+            opacity: 1;
+        }
+    }
+
+    .animate-up {
+        animation: fadeInUp 0.8s ease-out forwards;
+        opacity: 0;
+    }
+
+    .delay-1 {
+        animation-delay: 0.2s;
+    }
+
+    .delay-2 {
+        animation-delay: 0.4s;
+    }
+
+    .delay-3 {
+        animation-delay: 0.6s;
+    }
+
+    /* Hero Section */
+    .hero-section {
+        background: linear-gradient(rgba(13, 37, 63, 0.85), rgba(13, 37, 63, 0.85)),
+            url('https://images.unsplash.com/photo-1540910419892-f0c74b0e8966?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80');
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+        padding: 120px 0;
+        color: white;
+        border-radius: 0 0 80px 80px;
+        margin-top: -2rem;
+        margin-bottom: 60px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .hero-content {
+        position: relative;
+        z-index: 2;
+    }
+
+    .hero-title {
+        font-size: 4rem;
+        font-weight: 800;
+        margin-bottom: 25px;
+        line-height: 1.1;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    }
+
+    .hero-subtitle {
+        font-size: 1.3rem;
+        opacity: 0.95;
+        margin-bottom: 45px;
+        max-width: 650px;
+        text-shadow: 0 1px 5px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Glassmorphism Feature Cards */
+    .feature-card {
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+        border-radius: 24px;
+        padding: 45px 35px;
+        text-align: center;
+        transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+        height: 100%;
+    }
+
+    .feature-card:hover {
+        transform: translateY(-12px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        background: rgba(255, 255, 255, 0.85);
+    }
+
+    .feature-icon {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, var(--secondary-color) 0%, #00b4ff 100%);
+        color: white;
+        font-size: 2rem;
+        border-radius: 22px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 30px;
+        box-shadow: 0 10px 20px rgba(0, 136, 204, 0.2);
+        transition: all 0.3s ease;
+    }
+
+    .feature-card:hover .feature-icon {
+        transform: rotateY(180deg);
+    }
+
+    /* Buttons */
+    .btn-hero {
+        padding: 16px 45px;
+        font-size: 1.15rem;
+        font-weight: 700;
+        border-radius: 50px;
+        transition: all 0.4s;
+    }
+
+    .btn-get-started {
+        background: linear-gradient(135deg, var(--accent-color) 0%, #ffdb4d 100%);
+        color: var(--primary-color);
+        border: none;
+        margin-right: 15px;
+        box-shadow: 0 8px 25px rgba(255, 193, 7, 0.3);
+    }
+
+    .btn-get-started:hover {
+        transform: scale(1.08);
+        box-shadow: 0 12px 30px rgba(255, 193, 7, 0.5);
+    }
+
+    /* Glassmorphism Stats Bar */
+    .stats-bar {
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        padding: 50px;
+        border-radius: 35px;
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.08);
+        margin-top: -100px;
+        position: relative;
+        z-index: 10;
+        margin-bottom: 100px;
+    }
+
+    .stat-item h3 {
+        font-weight: 800;
+        color: var(--primary-color);
+        margin-bottom: 5px;
+        font-size: 2.5rem;
+    }
+
+    .stat-item p {
+        color: #555;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-size: 0.85rem;
+    }
+
+    @keyframes rotateIcon {
+        0% {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+
+    .rotate-icon {
+        animation: rotateIcon 20s linear infinite;
+    }
+</style>
+{% endblock %}
+
+{% block full_width %}
+<section class="hero-section text-center text-lg-start">
+    <div class="container hero-content">
+        <div class="row align-items-center">
+            <div class="col-lg-7">
+                <h1 class="hero-title animate-up">Empowering Your Voice with <span
+                        style="color: var(--secondary-color);">QuickVote</span></h1>
+                <p class="hero-subtitle animate-up delay-1">The next generation of secure, transparent, and easy-to-use
+                    digital voting.
+                    Cast your vote with confidence from anywhere in the world.</p>
+                <div
+                    class="d-flex flex-column flex-sm-row justify-content-center justify-content-lg-start animate-up delay-2">
+                    <a href="{% url 'election_list' %}" class="btn btn-hero btn-get-started mb-3 mb-sm-0">
+                        <i class="fas fa-paper-plane me-2"></i>Explore Elections
+                    </a>
+                    {% if not user.is_authenticated %}
+                    <a href="{% url 'login' %}" class="btn btn-hero btn-outline-white">
+                        <i class="fas fa-sign-in-alt me-2"></i>Login Now
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-lg-5 d-none d-lg-block animate-up delay-2">
+                <div class="position-relative">
+                    <div style="font-size: 15rem; color: rgba(255,255,255,0.1); text-align: center;">
+                        <i class="fas fa-check-double rotate-icon"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block content %}
+<div class="stats-bar animate-up delay-1">
+    <div class="row text-center">
+        <div class="col-md-4 mb-3 mb-md-0 border-end">
+            <div class="stat-item">
+                <h3>100%</h3>
+                <p>Secure & Encrypted</p>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3 mb-md-0 border-end">
+            <div class="stat-item">
+                <h3>Fast</h3>
+                <p>Real-time Results</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-item">
+                <h3>Verified</h3>
+                <p>Face Authentication</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-5">
+    <div class="col-12 text-center mb-5 animate-up">
+        <h2 class="fw-bold" style="color: var(--primary-color);">Why Choose QuickVote?</h2>
+        <p class="text-muted">Built for security and designed for the best user experience.</p>
+    </div>
+    <div class="col-md-4 mb-4 animate-up delay-1">
+        <div class="feature-card">
+            <div class="feature-icon">
+                <i class="fas fa-user-shield"></i>
+            </div>
+            <h4>Face Verification</h4>
+            <p class="text-muted">Advanced biometric authentication ensures that only registered voters can cast
+                their ballots.</p>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4 animate-up delay-2">
+        <div class="feature-card">
+            <div class="feature-icon">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <h4>Instant Results</h4>
+            <p class="text-muted">No more waiting for days. Get live updates and final results immediately after
+                polls close.</p>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4 animate-up delay-3">
+        <div class="feature-card">
+            <div class="feature-icon">
+                <i class="fas fa-lock"></i>
+            </div>
+            <h4>End-to-End Security</h4>
+            <p class="text-muted">Your vote is your choice. We use military-grade encryption to keep all data safe
+                and anonymous.</p>
+        </div>
+    </div>
+</div>
+
+<div class="bg-primary text-white p-5 rounded-4 text-center mt-5 mb-5 shadow-lg animate-up"
+    style="background: linear-gradient(135deg, #0d253f 0%, #0088cc 100%) !important;">
+    <h2 class="mb-4 fw-bold">Ready to participate in the next election?</h2>
+    <p class="mb-5 opacity-75">Join thousands of others in shaping the future through secure digital voting.</p>
+    <a href="{% url 'register' %}" class="btn btn-hero btn-get-started px-5">Join QuickVote Today</a>
+</div>
+
+{% endblock %}

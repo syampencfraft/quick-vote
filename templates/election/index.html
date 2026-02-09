@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block title %}Active Elections - QuickVote{% endblock %}
+
+{% block content %}
+<div class="row mb-5 mt-4">
+    <div class="col-12 animate-up">
+        <h2 class="section-title">Active Elections</h2>
+        <p class="text-muted">Explore and participate in current democratic processes.</p>
+    </div>
+</div>
+
+{% if elections %}
+<div class="row">
+    {% for election in elections %}
+    <div class="col-lg-6 mb-4 animate-up"
+        style="animation-delay: {{ forloop.counter|add:1|add:forloop.counter|add:1 }}00ms;">
+        <div class="glass-card h-100 p-4">
+            <div class="d-flex align-items-center mb-3">
+                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3"
+                    style="width: 50px; height: 50px; background: linear-gradient(135deg, #0d253f 0%, var(--secondary-color) 100%) !important;">
+                    <i class="fas fa-vote-yea"></i>
+                </div>
+                <h4 class="mb-0 fw-bold" style="color: var(--primary-color);">{{ election.title }}</h4>
+            </div>
+
+            <p class="text-muted mb-4">{{ election.description|truncatewords:30 }}</p>
+
+            <div class="d-flex align-items-center mb-4">
+                <div class="me-4 border-end pe-4">
+                    <small class="text-uppercase fw-bold opacity-50 d-block mb-1"
+                        style="font-size: 0.7rem;">Status</small>
+                    <span class="badge rounded-pill bg-success px-3 py-2">Active</span>
+                </div>
+                <div>
+                    <small class="text-uppercase fw-bold opacity-50 d-block mb-1" style="font-size: 0.7rem;">Ends
+                        On</small>
+                    <span class="fw-bold" style="color: var(--primary-color);"><i
+                            class="far fa-calendar-alt me-2 text-secondary"></i>{{ election.end_date|date:"M d, Y"
+                        }}</span>
+                </div>
+            </div>
+
+            <a href="{% url 'election_detail' election.id %}" class="btn btn-register w-100 py-3">
+                Join Election <i class="fas fa-arrow-right ms-2"></i>
+            </a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="glass-card p-5 text-center animate-up">
+    <div class="mb-4">
+        <i class="fas fa-box-open fa-4x opacity-25"></i>
+    </div>
+    <h4 class="fw-bold opacity-75">No active elections available</h4>
+    <p class="text-muted">Please check back later or contact your administrator.</p>
+</div>
+{% endif %}
+{% endblock %}
