@@ -36,14 +36,30 @@
                     <small class="text-uppercase fw-bold opacity-50 d-block mb-1" style="font-size: 0.7rem;">Ends
                         On</small>
                     <span class="fw-bold" style="color: var(--primary-color);"><i
-                            class="far fa-calendar-alt me-2 text-secondary"></i>{{ election.end_date|date:"M d, Y"
-                        }}</span>
+                            class="far fa-calendar-alt me-2 text-secondary"></i>{{ election.end_date|date:"M d, Y" }}</span>
+                    
+
+
                 </div>
             </div>
 
-            <a href="{% url 'election_detail' election.id %}" class="btn btn-register w-100 py-3">
-                Join Election <i class="fas fa-arrow-right ms-2"></i>
-            </a>
+            <div class="d-flex gap-2">
+                <a href="{% url 'election_detail' election.id %}" class="btn btn-register flex-grow-1 py-3">
+                    Join Election <i class="fas fa-arrow-right ms-2"></i>
+                </a>
+                {% if user.role == 'ADMIN' and election.is_active %}
+                <a href="{% url 'finish_election' election.id %}" class="btn btn-danger py-3 px-4"
+                    title="Finish & Publish Results">
+                    <i class="fas fa-flag-checkered"></i>
+                </a>
+                {% endif %}
+                {% if election.results_published %}
+                <a href="{% url 'election_results' election.id %}" class="btn btn-outline-primary py-3 px-4"
+                    title="View Results">
+                    <i class="fas fa-poll"></i>
+                </a>
+                {% endif %}
+            </div>
         </div>
     </div>
     {% endfor %}

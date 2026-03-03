@@ -7,17 +7,24 @@ from .models import Election, Candidate, Vote
 from users.utils_face import compare_faces
 from django.core.files.base import ContentFile
 import base64
+from django.contrib.auth.decorators import user_passes_test
+from users.models import User
+from .forms import ElectionForm, CandidateForm
 
 
 def first(request):
     return render(request, 'election/first_page.html')
     
 def election_list(request):
+    if request.user.is_authenticated and request.user.role == User.Role.ADMIN:
+        return redirect('admin_dashboard')
     elections = Election.objects.filter(is_active=True)
     return render(request, 'election/index.html', {'elections': elections})
 
 @login_required
 def election_detail(request, election_id):
+    if request.user.role == User.Role.ADMIN:
+        return redirect('admin_dashboard')
     election = get_object_or_404(Election, pk=election_id)
     candidates = election.candidates.all()
     
@@ -32,6 +39,8 @@ def election_detail(request, election_id):
 
 @login_required
 def verify_face(request, election_id):
+    if request.user.role == User.Role.ADMIN:
+        return JsonResponse({'success': False, 'message': 'Admins cannot participate in elections.'})
     if request.method == 'POST':
         image_data = request.POST.get('image')
         
@@ -69,6 +78,9 @@ def verify_face(request, election_id):
 
 @login_required
 def cast_vote(request, election_id):
+    if request.user.role == User.Role.ADMIN:
+        messages.error(request, "Admins cannot participate in elections.")
+        return redirect('admin_dashboard')
     if request.method == 'POST':
         election = get_object_or_404(Election, pk=election_id)
         candidate_id = request.POST.get('candidate')
@@ -97,6 +109,12 @@ def cast_vote(request, election_id):
 @login_required
 def election_results(request, election_id):
     election = get_object_or_404(Election, pk=election_id)
+    
+    # Only Admin can see results if they aren't published yet
+    if not election.results_published and request.user.role != User.Role.ADMIN:
+        messages.warning(request, "Results for this election have not been published yet.")
+        return redirect('election_list')
+        
     candidates = election.candidates.all()
     
     results = []
@@ -119,6 +137,89 @@ def election_results(request, election_id):
         'results': results,
         'total_votes': total_votes
     })
+
+@login_required
+@user_passes_test(lambda u: u.role == User.Role.ADMIN)
+def admin_dashboard(request):
+    elections = Election.objects.all().order_by('-start_date')
+    users = User.objects.all().order_by('-date_joined')
+    return render(request, 'election/admin_dashboard.html', {
+        'elections': elections,
+        'users': users
+    })
+
+@login_required
+@user_passes_test(lambda u: u.role == User.Role.ADMIN)
+def add_election(request):
+    if request.method == 'POST':
+        form = ElectionForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Election created successfully!")
+            return redirect('admin_dashboard')
+    else:
+        form = ElectionForm()
+    return render(request, 'election/election_form.html', {'form': form, 'title': 'Create New Election'})
+
+@login_required
+@user_passes_test(lambda u: u.role == User.Role.ADMIN)
+def edit_election(request, election_id):
+    election = get_object_or_404(Election, pk=election_id)
+    if request.method == 'POST':
+        form = ElectionForm(request.POST, instance=election)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Election updated successfully!")
+            return redirect('admin_dashboard')
+    else:
+        form = ElectionForm(instance=election)
+    return render(request, 'election/election_form.html', {'form': form, 'title': 'Edit Election'})
+
+@login_required
+@user_passes_test(lambda u: u.role == User.Role.ADMIN)
+def add_candidate(request, election_id):
+    election = get_object_or_404(Election, pk=election_id)
+    if request.method == 'POST':
+        form = CandidateForm(request.POST, request.FILES)
+        if form.is_valid():
+            candidate = form.save(commit=False)
+            candidate.election = election
+            candidate.save()
+            messages.success(request, f"Candidate added to {election.title}")
+            return redirect('admin_dashboard')
+    else:
+        form = CandidateForm()
+    return render(request, 'election/candidate_form.html', {'form': form, 'election': election})
+
+@login_required
+@user_passes_test(lambda u: u.role == User.Role.ADMIN)
+def toggle_election(request, election_id):
+    election = get_object_or_404(Election, pk=election_id)
+    election.is_active = not election.is_active
+    election.save()
+    status = "activated" if election.is_active else "deactivated"
+    messages.success(request, f"Election {status} successfully!")
+    return redirect('admin_dashboard')
+
+@login_required
+@user_passes_test(lambda u: u.role == User.Role.ADMIN)
+def toggle_results(request, election_id):
+    election = get_object_or_404(Election, pk=election_id)
+    election.results_published = not election.results_published
+    election.save()
+    status = "published" if election.results_published else "hidden"
+    messages.success(request, f"Election results are now {status}!")
+    return redirect('admin_dashboard')
+
+@login_required
+@user_passes_test(lambda u: u.role == User.Role.ADMIN)
+def finish_election(request, election_id):
+    election = get_object_or_404(Election, pk=election_id)
+    election.is_active = False
+    election.results_published = True
+    election.save()
+    messages.success(request, f"Election '{election.title}' has been finished and results are now public!")
+    return redirect('admin_dashboard')
 
 def feedback_view(request):
     from .models import Feedback

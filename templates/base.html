@@ -246,9 +246,24 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto align-items-center">
                     {% if user.is_authenticated %}
+                    {% if user.role == 'ADMIN' %}
+                    <li class="nav-item">
+                        <a class="nav-link btn btn-auth btn-login px-3 py-1 me-2 mb-2 mb-lg-0"
+                            href="{% url 'admin_dashboard' %}">
+                            <i class="fas fa-tools me-1"></i>Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link btn btn-auth btn-register px-3 py-1" href="{% url 'add_election' %}">
+                            <i class="fas fa-plus-circle me-1"></i>New Election
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% if user.role == 'VOTER' %}
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'dashboard' %}">Dashboard</a>
                     </li>
+                    {% endif %}
                     <!-- User Dropdown -->
                     <li class="nav-item dropdown ms-lg-3">
                         <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="navbarDropdown"

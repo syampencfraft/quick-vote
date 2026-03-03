@@ -7,12 +7,16 @@ from .forms import CustomUserCreationForm, OTPForm, StudentProfileForm
 from .models import User, StudentProfile
 from .utils_otp import generate_otp, send_otp_email
 from .utils_face import get_face_encoding
+from django.core.files.base import ContentFile
+import base64
+
 
 def register_view(request):
     if request.method == 'POST':
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
             user = form.save(commit=False)
+            user.role = User.Role.VOTER  # Public signup is strictly for voters
             user.is_active = False # Deactivate until OTP verified
             user.save()
             
@@ -50,9 +54,9 @@ def otp_verify_view(request):
                     login(request, user)
                     messages.success(request, "Email verified successfully!")
                     
-                    if user.role == User.Role.VOTER:
+                    if user.role == User.Role.VOTER and not user.is_superuser:
                         return redirect('voter_profile')
-                    return redirect('election_list')
+                    return redirect('admin_dashboard')
                 else:
                     messages.error(request, "Invalid or expired OTP.")
             except User.DoesNotExist:
@@ -70,8 +74,10 @@ def login_view(request):
             user = authenticate(username=username, password=password)
             if user is not None:
                 login(request, user)
-                if user.role == User.Role.VOTER and not hasattr(user, 'student_profile'):
+                if user.role == User.Role.VOTER and not user.is_superuser and not hasattr(user, 'student_profile'):
                      return redirect('voter_profile')
+                if user.role == User.Role.ADMIN or user.is_superuser:
+                    return redirect('admin_dashboard')
                 return redirect('election_list')
     else:
         form = AuthenticationForm()
@@ -79,15 +85,36 @@ def login_view(request):
 
 @login_required
 def voter_profile_view(request):
+    # Admins and Superusers don't need a voter profile
+    if request.user.role == User.Role.ADMIN or request.user.is_superuser:
+        return redirect('admin_dashboard')
+        
     if request.method == 'POST':
         form = StudentProfileForm(request.POST, request.FILES)
         if form.is_valid():
             # Process Face
-            image_file = request.FILES.get('face_image')
+            image_data = request.POST.get('captured_image')
+            image_file = None
+            
+            if image_data and ';base64,' in image_data:
+                try:
+                    format, imgstr = image_data.split(';base64,')
+                    ext = format.split('/')[-1]
+                    image_file = ContentFile(base64.b64decode(imgstr), name=f'user_{request.user.id}_face.{ext}')
+                except Exception as e:
+                    messages.error(request, f"Error processing captured image: {str(e)}")
+                    return render(request, 'users/voter_profile.html', {'form': form})
+            else:
+                image_file = request.FILES.get('face_image')
+            
+            if not image_file:
+                messages.error(request, "No facial image provided. Please capture or upload a photo.")
+                return render(request, 'users/voter_profile.html', {'form': form})
+
             encoding = get_face_encoding(image_file)
             
             if encoding is None:
-                messages.error(request, "Face not detected in the image. Please upload a clear photo.")
+                messages.error(request, "Face not detected in the image. Please try again with a clear photo.")
             else:
                 profile = form.save(commit=False)
                 profile.user = request.user
@@ -101,6 +128,8 @@ def voter_profile_view(request):
 
 @login_required
 def dashboard_view(request):
+    if request.user.role == User.Role.ADMIN:
+        return redirect('admin_dashboard')
     return render(request, 'users/dashboard.html')
 
 def logout_view(request):
