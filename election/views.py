@@ -7,6 +7,7 @@ from .models import Election, Candidate, Vote
 from users.utils_face import compare_faces
 from django.core.files.base import ContentFile
 import base64
+import os
 from django.contrib.auth.decorators import user_passes_test
 from users.models import User
 from .forms import ElectionForm, CandidateForm
@@ -18,8 +19,13 @@ def first(request):
 def election_list(request):
     if request.user.is_authenticated and request.user.role == User.Role.ADMIN:
         return redirect('admin_dashboard')
-    elections = Election.objects.filter(is_active=True)
-    return render(request, 'election/index.html', {'elections': elections})
+    # Show both active and recently finished elections
+    elections = Election.objects.all().order_by('-end_date')
+    now = timezone.now()
+    return render(request, 'election/index.html', {
+        'elections': elections,
+        'now': now
+    })
 
 @login_required
 def election_detail(request, election_id):
@@ -31,10 +37,16 @@ def election_detail(request, election_id):
     # Check if already voted
     has_voted = Vote.objects.filter(election=election, voter=request.user).exists()
     
+    now = timezone.now()
+    has_ended = now > election.end_date
+    has_started = now >= election.start_date
+    
     return render(request, 'election/detail.html', {
         'election': election,
         'candidates': candidates,
-        'has_voted': has_voted
+        'has_voted': has_voted,
+        'has_ended': has_ended,
+        'has_started': has_started
     })
 
 @login_required
@@ -63,6 +75,13 @@ def verify_face(request, election_id):
             # We need to reload the image from the ContentFile for face_recognition
             match = compare_faces(known_encoding_bytes, data)
             
+            # Cleanup temporary file if it was written to disk
+            if hasattr(data, 'temporary_file_path'):
+                try:
+                    os.remove(data.temporary_file_path())
+                except:
+                    pass
+
             if match:
                 # Set a session flag to allow voting in this election
                 request.session[f'verified_election_{election_id}'] = True
@@ -93,6 +112,15 @@ def cast_vote(request, election_id):
         if Vote.objects.filter(election=election, voter=request.user).exists():
              messages.error(request, "You have already voted in this election.")
              return redirect('election_detail', election_id=election_id)
+        
+        now = timezone.now()
+        if now > election.end_date:
+            messages.error(request, "This election has ended. Voting is no longer allowed.")
+            return redirect('election_detail', election_id=election_id)
+        
+        if now < election.start_date:
+            messages.error(request, "This election has not started yet.")
+            return redirect('election_detail', election_id=election_id)
              
         # Record Vote
         candidate = get_object_or_404(Candidate, pk=candidate_id)
@@ -110,8 +138,14 @@ def cast_vote(request, election_id):
 def election_results(request, election_id):
     election = get_object_or_404(Election, pk=election_id)
     
-    # Only Admin can see results if they aren't published yet
-    if not election.results_published and request.user.role != User.Role.ADMIN:
+    # Show results if:
+    # 1. Admin manually published them
+    # 2. The election has ended (deadline passed)
+    # 3. User is an admin
+    now = timezone.now()
+    show_results = election.results_published or now > election.end_date or request.user.role == User.Role.ADMIN
+    
+    if not show_results:
         messages.warning(request, "Results for this election have not been published yet.")
         return redirect('election_list')
         

@@ -30,35 +30,41 @@
                 <div class="me-4 border-end pe-4">
                     <small class="text-uppercase fw-bold opacity-50 d-block mb-1"
                         style="font-size: 0.7rem;">Status</small>
-                    <span class="badge rounded-pill bg-success px-3 py-2">Active</span>
+                    {% if now > election.end_date %}
+                    <span class="badge rounded-pill bg-danger px-3 py-2">Ended</span>
+                    {% elif now < election.start_date %} <span class="badge rounded-pill bg-secondary px-3 py-2">
+                        Upcoming</span>
+                        {% else %}
+                        <span class="badge rounded-pill bg-success px-3 py-2">Active</span>
+                        {% endif %}
                 </div>
                 <div>
-                    <small class="text-uppercase fw-bold opacity-50 d-block mb-1" style="font-size: 0.7rem;">Ends
-                        On</small>
-                    <span class="fw-bold" style="color: var(--primary-color);"><i
-                            class="far fa-calendar-alt me-2 text-secondary"></i>{{ election.end_date|date:"M d, Y" }}</span>
-                    
-
-
+                    <small class="text-uppercase fw-bold opacity-50 d-block mb-1" style="font-size: 0.7rem;">
+                        {% if now > election.end_date %}Ended At{% else %}Ends On{% endif %}
+                    </small>
+                    <span class="fw-bold" style="color: var(--primary-color);">
+                        <i class="far fa-calendar-alt me-2 text-secondary"></i>{{ election.end_date|date:"M d, Y" }}
+                    </span>
                 </div>
             </div>
 
             <div class="d-flex gap-2">
-                <a href="{% url 'election_detail' election.id %}" class="btn btn-register flex-grow-1 py-3">
+                {% if now <= election.end_date %} <a href="{% url 'election_detail' election.id %}"
+                    class="btn btn-register flex-grow-1 py-3">
                     Join Election <i class="fas fa-arrow-right ms-2"></i>
-                </a>
-                {% if user.role == 'ADMIN' and election.is_active %}
-                <a href="{% url 'finish_election' election.id %}" class="btn btn-danger py-3 px-4"
-                    title="Finish & Publish Results">
-                    <i class="fas fa-flag-checkered"></i>
-                </a>
-                {% endif %}
-                {% if election.results_published %}
-                <a href="{% url 'election_results' election.id %}" class="btn btn-outline-primary py-3 px-4"
-                    title="View Results">
-                    <i class="fas fa-poll"></i>
-                </a>
-                {% endif %}
+                    </a>
+                    {% else %}
+                    <a href="{% url 'election_results' election.id %}" class="btn btn-register flex-grow-1 py-3">
+                        View Results <i class="fas fa-chart-pie ms-2"></i>
+                    </a>
+                    {% endif %}
+
+                    {% if user.role == 'ADMIN' and election.is_active %}
+                    <a href="{% url 'finish_election' election.id %}" class="btn btn-danger py-3 px-4"
+                        title="Finish & Publish Results">
+                        <i class="fas fa-flag-checkered"></i>
+                    </a>
+                    {% endif %}
             </div>
         </div>
     </div>

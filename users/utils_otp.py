@@ -17,6 +17,6 @@ def send_otp_email(user, otp_code):
     # In development, fail_silently=True or mock if email settings aren't configured
     try:
         send_mail(subject, message, email_from, recipient_list)
-        print(f"OTP sent to {user.email}: {otp_code}") # For dev monitoring
+        # OTP is no longer printed to console for security
     except Exception as e:
         print(f"Error sending email: {e}")

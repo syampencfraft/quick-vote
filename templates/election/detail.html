@@ -130,6 +130,29 @@
                 <i class="fas fa-chart-pie me-2"></i>View Live Results
             </a>
         </div>
+        {% elif has_ended %}
+        <div class="glass-card p-5 text-center animate-up">
+            <div class="mb-4">
+                <i class="fas fa-hourglass-end fa-5x text-danger opacity-50"></i>
+            </div>
+            <h2 class="fw-bold mb-3">Voting Has Ended</h2>
+            <p class="text-muted mb-5">This election closed on {{ election.end_date|date:"M d, Y H:i" }}.</p>
+            <a href="{% url 'election_results' election.id %}" class="btn btn-register px-5 py-3">
+                <i class="fas fa-poll me-2"></i>View Final Results
+            </a>
+        </div>
+        {% elif not has_started %}
+        <div class="glass-card p-5 text-center animate-up">
+            <div class="mb-4">
+                <i class="far fa-calendar-alt fa-5x text-primary opacity-50"></i>
+            </div>
+            <h2 class="fw-bold mb-3">Election Not Started</h2>
+            <p class="text-muted mb-5">Voting for this election will begin on {{ election.start_date|date:"M d, Y H:i"
+                }}.</p>
+            <a href="{% url 'election_list' %}" class="btn btn-outline-secondary px-5 py-3">
+                <i class="fas fa-arrow-left me-2"></i>Back to Elections
+            </a>
+        </div>
         {% else %}
 
         <!-- Step 1: Verification -->
@@ -207,7 +230,7 @@
 
 {% block extra_scripts %}
 <script>
-    {% if not has_voted %}
+    {% if not has_voted and not has_ended and has_started %}
     const video = document.getElementById('video');
     const canvas = document.getElementById('canvas');
     const startBtn = document.getElementById('start-camera');

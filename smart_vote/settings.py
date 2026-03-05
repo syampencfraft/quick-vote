@@ -130,8 +130,14 @@ AUTH_USER_MODEL = 'users.User'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Email Backend for development (prints to console)
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# Email Settings
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'  # Replace with your SMTP server
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'your-email@gmail.com'  # Replace with your email
+EMAIL_HOST_PASSWORD = 'your-app-password'  # Replace with your app-specific password
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 LOGIN_URL = '/users/login/'
 LOGIN_REDIRECT_URL = '/'

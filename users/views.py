@@ -9,6 +9,7 @@ from .utils_otp import generate_otp, send_otp_email
 from .utils_face import get_face_encoding
 from django.core.files.base import ContentFile
 import base64
+import os
 
 
 def register_view(request):
@@ -121,6 +122,14 @@ def voter_profile_view(request):
                 profile.face_encoding = encoding
                 profile.save()
                 messages.success(request, "Profile completed! You are now enrolled.")
+                
+                # Explicitly delete temporary files if they exist on disk
+                if image_file and hasattr(image_file, 'temporary_file_path'):
+                    try:
+                        os.remove(image_file.temporary_file_path())
+                    except Exception as e:
+                        print(f"Error deleting temp file: {e}")
+
                 return redirect('election_list')
     else:
         form = StudentProfileForm()
