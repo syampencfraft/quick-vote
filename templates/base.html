@@ -275,10 +275,13 @@
                             {{ user.username }}
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0" aria-labelledby="navbarDropdown">
-                            <li><a class="dropdown-item" href="#"><i class="fas fa-id-card me-2"></i>Profile</a></li>
+                            {% if user.role == 'VOTER' %}
+                            <li><a class="dropdown-item" href="{% url 'voter_profile' %}"><i
+                                        class="fas fa-id-card me-2"></i>Profile</a></li>
                             <li>
                                 <hr class="dropdown-divider">
                             </li>
+                            {% endif %}
                             <li>
                                 <form action="{% url 'logout' %}" method="post" class="d-block">
                                     {% csrf_token %}

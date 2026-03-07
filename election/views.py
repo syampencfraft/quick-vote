@@ -11,7 +11,8 @@ import os
 from django.contrib.auth.decorators import user_passes_test
 from users.models import User
 from .forms import ElectionForm, CandidateForm
-
+from django.core.mail import send_mail
+from django.conf import settings
 
 def first(request):
     return render(request, 'election/first_page.html')
@@ -53,6 +54,16 @@ def election_detail(request, election_id):
 def verify_face(request, election_id):
     if request.user.role == User.Role.ADMIN:
         return JsonResponse({'success': False, 'message': 'Admins cannot participate in elections.'})
+    
+    # Check election deadline before allowing verification
+    election = get_object_or_404(Election, pk=election_id)
+    now = timezone.now()
+    if now > election.end_date:
+        return JsonResponse({'success': False, 'message': 'This election has ended. Voting is no longer allowed.'})
+    if now < election.start_date:
+        return JsonResponse({'success': False, 'message': 'This election has not started yet.'})
+    if not election.is_active:
+        return JsonResponse({'success': False, 'message': 'This election is currently inactive.'})
     if request.method == 'POST':
         image_data = request.POST.get('image')
         
@@ -121,15 +132,29 @@ def cast_vote(request, election_id):
         if now < election.start_date:
             messages.error(request, "This election has not started yet.")
             return redirect('election_detail', election_id=election_id)
+        
+        if not election.is_active:
+            messages.error(request, "This election is currently inactive.")
+            return redirect('election_detail', election_id=election_id)
              
         # Record Vote
         candidate = get_object_or_404(Candidate, pk=candidate_id)
         Vote.objects.create(election=election, voter=request.user, candidate=candidate)
         
+        # Send Confirmation Email
+        try:
+            subject = f"Vote Confirmation - {election.title}"
+            message = f"Hello {request.user.username},\n\nYour vote for the election '{election.title}' has been successfully recorded.\n\nThank you for participating.\n\nQuickVote System"
+            email_from = settings.EMAIL_HOST_USER
+            send_mail(subject, message, email_from, [request.user.email])
+            print(f"[EMAIL] Vote confirmation sent to {request.user.email}")
+        except Exception as e:
+            print(f"[EMAIL ERROR] Could not send vote confirmation: {e}")
+        
         # Clear session flag
         del request.session[f'verified_election_{election_id}']
         
-        messages.success(request, "Vote cast successfully!")
+        messages.success(request, "Vote cast successfully! A confirmation email has been sent.")
         return redirect('election_results', election_id=election_id)
         
     return redirect('election_detail', election_id=election_id)

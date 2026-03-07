@@ -108,8 +108,10 @@
                         <i class="fas fa-flag-checkered me-2"></i>Finish & Publish
                     </a>
                     {% endif %}
-                    <span class="badge bg-white text-primary px-4 py-2 rounded-pill fw-bold w-100 text-center">
-                        <i class="far fa-clock me-2"></i>Ends: {{ election.end_date|date:"M d, H:i" }}
+                    <span class="badge bg-white text-primary px-4 py-2 rounded-pill fw-bold w-100 text-center"
+                        id="election-timer-badge">
+                        <i class="far fa-clock me-2"></i><span id="election-countdown">Ends: {{
+                            election.end_date|date:"M d, H:i" }}</span>
                     </span>
                 </div>
             </div>
@@ -303,5 +305,77 @@
             });
     });
     {% endif %}
+
+    // --- Live Countdown Timer ---
+    {% if not has_ended %}
+    (function () {
+        const endTime = new Date("{{ election.end_date|date:'Y-m-d' }}T{{ election.end_date|date:'H:i:s' }}Z");
+        const countdownEl = document.getElementById('election-countdown');
+        const badgeEl = document.getElementById('election-timer-badge');
+
+        function showVotingEnded() {
+            // Update the badge
+            if (badgeEl) {
+                badgeEl.className = 'badge bg-danger text-white px-4 py-2 rounded-pill fw-bold w-100 text-center';
+            }
+            if (countdownEl) countdownEl.textContent = 'Voting Ended';
+
+            // Hide voting & verification sections, show ended message
+            const verSec = document.getElementById('verification-section');
+            const votSec = document.getElementById('voting-section');
+            if (verSec) verSec.style.display = 'none';
+            if (votSec) votSec.style.display = 'none';
+
+            // Show ended panel
+            const wrapper = document.querySelector('.col-lg-10');
+            if (wrapper) {
+                // Remove existing content and insert ended card
+                const endedCard = document.createElement('div');
+                endedCard.className = 'glass-card p-5 text-center animate-up';
+                endedCard.innerHTML = `
+                    <div class="mb-4"><i class="fas fa-hourglass-end fa-5x text-danger opacity-50"></i></div>
+                    <h2 class="fw-bold mb-3">Voting Has Ended</h2>
+                    <p class="text-muted mb-5">The election deadline has just passed. No more votes are accepted.</p>
+                    <a href="{% url 'election_results' election.id %}" class="btn btn-register px-5 py-3">
+                        <i class="fas fa-poll me-2"></i>View Final Results
+                    </a>`;
+                // Clear any existing content and append
+                if (verSec) verSec.replaceWith(endedCard);
+                if (votSec) votSec.remove();
+            }
+        }
+
+        function tick() {
+            const now = new Date();
+            const diff = endTime - now;
+
+            if (diff <= 0) {
+                showVotingEnded();
+                return; // stop ticking
+            }
+
+            const hours = Math.floor(diff / 3600000);
+            const minutes = Math.floor((diff % 3600000) / 60000);
+            const seconds = Math.floor((diff % 60000) / 1000);
+
+            let label = '';
+            if (hours > 0) label = `${hours}h ${minutes}m ${seconds}s remaining`;
+            else if (minutes > 0) label = `${minutes}m ${seconds}s remaining`;
+            else label = `${seconds}s remaining`;
+
+            if (countdownEl) countdownEl.textContent = label;
+
+            // Turn badge red in the last 60 seconds
+            if (diff <= 60000 && badgeEl) {
+                badgeEl.className = 'badge bg-danger text-white px-4 py-2 rounded-pill fw-bold w-100 text-center';
+            }
+
+            setTimeout(tick, 1000);
+        }
+
+        tick();
+    })();
+    {% endif %}
+
 </script>
 {% endblock %}
