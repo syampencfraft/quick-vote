@@ -111,7 +111,7 @@
                     <span class="badge bg-white text-primary px-4 py-2 rounded-pill fw-bold w-100 text-center"
                         id="election-timer-badge">
                         <i class="far fa-clock me-2"></i><span id="election-countdown">Ends: {{
-                            election.end_date|date:"M d, H:i" }}</span>
+                            election.end_date|date:"F d, Y h:i A" }}</span>
                     </span>
                 </div>
             </div>
@@ -149,7 +149,7 @@
                 <i class="far fa-calendar-alt fa-5x text-primary opacity-50"></i>
             </div>
             <h2 class="fw-bold mb-3">Election Not Started</h2>
-            <p class="text-muted mb-5">Voting for this election will begin on {{ election.start_date|date:"M d, Y H:i"
+            <p class="text-muted mb-5">Voting for this election will begin on {{ election.start_date|date:"F d, Y h:i A"
                 }}.</p>
             <a href="{% url 'election_list' %}" class="btn btn-outline-secondary px-5 py-3">
                 <i class="fas fa-arrow-left me-2"></i>Back to Elections
@@ -204,23 +204,31 @@
                             {% if candidate.symbol %}
                             <img src="{{ candidate.symbol.url }}" alt="{{ candidate.name }}" class="candidate-img">
                             {% else %}
-                            <div class="candidate-img bg-light d-flex align-items-center justify-content-center">
-                                <i class="fas fa-user text-muted"></i>
+                            <div class="candidate-img d-flex align-items-center justify-content-center bg-secondary text-white fw-bold"
+                                style="font-size:1.5rem;">
+                                {{ candidate.name|first|upper }}
                             </div>
                             {% endif %}
-                            <div class="candidate-content text-start">
-                                <h5 class="mb-0 fw-bold">{{ candidate.name }}</h5>
+                            <div class="candidate-content">
+                                <h5 class="mb-1 fw-bold">{{ candidate.name }}</h5>
                                 <small class="text-muted">{{ candidate.details }}</small>
                             </div>
                         </label>
+                    </div>
+                    {% empty %}
+                    <div class="col-12 text-center text-muted py-5">
+                        <i class="fas fa-users-slash fa-3x mb-3 opacity-50"></i>
+                        <h5>No candidates available</h5>
+                        <p>There are currently no candidates registered for this election.</p>
                     </div>
                     {% endfor %}
                 </div>
 
                 <div class="mt-5 text-center">
                     <button type="submit" class="btn btn-register btn-lg px-5 py-3"
-                        onclick="return confirm('Are you sure you want to cast your vote for this candidate?')">
-                        <i class="fas fa-paper-plane me-2"></i>Confirm & Submit Vote
+                        onclick="return confirm('Are you sure you want to cast your vote for this candidate?')" 
+                        {% if not candidates %}disabled{% endif %}>
+                        <i class="fas fa-paper-plane me-2"></i>Confirm &amp; Submit Vote
                     </button>
                 </div>
             </form>

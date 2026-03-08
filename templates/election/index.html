@@ -43,7 +43,7 @@
                         {% if now > election.end_date %}Ended At{% else %}Ends On{% endif %}
                     </small>
                     <span class="fw-bold" style="color: var(--primary-color);">
-                        <i class="far fa-calendar-alt me-2 text-secondary"></i>{{ election.end_date|date:"M d, Y" }}
+                        <i class="far fa-calendar-alt me-2 text-secondary"></i>{{ election.end_date|date:"M d, Y H:i" }}
                     </span>
                 </div>
             </div>
